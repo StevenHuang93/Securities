@@ -5,8 +5,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 namespace Exam
 {
@@ -28,36 +30,42 @@ namespace Exam
 
         public Form1()
         {
-            InitializeComponent();          
+            InitializeComponent();
         }
 
         public void LoadExam(string type)
         {
-            string sql = "select * from exam where type = @type and year = @year and quarter = @quarter";
-
             string year = comboBox1.Text;
 
             string quarter = comboBox2.Text;
 
-            if ((year == "110" && quarter == "4") || (year == "111" && Convert.ToInt16(quarter) != 1))
+            //string sql = "select * from exam where type = @type and year = @year and quarter = @quarter";
+
+            if ((year == "110" && quarter == "4") || (year == "111" && Convert.ToInt16(quarter) == 4))
             {
                 return;
             }
 
-            string connectionString = @"Data Source=(localdb)\v2019;Initial Catalog=Securities;Integrated Security=True";
+            string fileName = $"Json\\{comboBox1.Text}_Q{comboBox2.Text}_{type}.json";
 
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
+            var examJson = File.ReadAllText(fileName);
 
-                var parameters = new { type = type, year = comboBox1.Text, quarter = comboBox2.Text };
+            exam = JsonConvert.DeserializeObject<List<Test>>(examJson);
 
-                var affectedRows = connection.Query<Test>(sql, parameters);
+            //string connectionString = @"Data Source=(localdb)\v2019;Initial Catalog=Securities;Integrated Security=True";
 
-                //exam = affectedRows.OrderBy(a => rng.Next()).Take(examCount).ToList();
+            //using (var connection = new SqlConnection(connectionString))
+            //{
+            //    connection.Open();
 
-                exam = affectedRows.ToList();
-            }
+            //    var parameters = new { type = type, year = comboBox1.Text, quarter = comboBox2.Text };
+
+            //    var affectedRows = connection.Query<Test>(sql, parameters);
+
+            //    //exam = affectedRows.OrderBy(a => rng.Next()).Take(examCount).ToList();
+
+            //    exam = affectedRows.ToList();
+            //}
 
             exam = exam.OrderBy(a => a.ExamID).ToList();
 
@@ -107,7 +115,7 @@ namespace Exam
                 getPointCount++;
             }
 
-            label1.Text = $"{examResult.Count + 1 }/{examCount}";
+            label1.Text = $"{examResult.Count + 1}/{examCount}";
 
             if (examResult.Count == examCount)
             {
